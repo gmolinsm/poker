@@ -70,17 +70,22 @@ class Hand(object):
                 if not ranks.__contains__(self.cards[i].get_rank()):
                     ranks.append(self.cards[i].get_rank())
         if len(ranks) == 2:
-            if not self.is_fullhouse() and not self.is_flush():
+            if not self.is_flush():
                 return True
         return False
 
     def is_threeofakind(self):
+        self.cards.sort()
         for i in range(5):
             for j in range(i+1, 5):
                 for k in range(j+1, 5):
                     if self.cards[i].get_rank() == self.cards[j].get_rank() \
                             and self.cards[i].get_rank() == self.cards[k].get_rank():
-                        if not self.is_flush() and not self.is_fullhouse():
+                        if self.cards[0].get_rank() != self.cards[1].get_rank() \
+                                or (self.cards[0].get_rank() != self.cards[4].get_rank()
+                                    and self.cards[1].get_rank() == self.cards[2].get_rank()
+                                    and self.cards[1].get_rank() == self.cards[3].get_rank()) \
+                                or self.cards[3].get_rank() != self.cards[4].get_rank():
                             return True
         return False
 
@@ -93,14 +98,19 @@ class Hand(object):
             return True
 
     def is_fullhouse(self):
-        count = 0
-        for i in range(4):
-            if self.cards[i].get_rank() != self.cards[i + 1].get_rank():
-                count += 1
-                if count > 1:
-                    return False
-        if not self.is_fourofakind():
-            return True
+        self.cards.sort()
+        for i in range(5):
+            for j in range(i + 1, 5):
+                for k in range(j + 1, 5):
+                    if self.cards[i].get_rank() == self.cards[j].get_rank() \
+                                and self.cards[i].get_rank() == self.cards[k].get_rank():
+                        if self.cards[0].get_rank() == self.cards[1].get_rank():
+                                if self.cards[3].get_rank() == self.cards[4].get_rank():
+                                    return True
+                        if self.cards[3].get_rank() == self.cards[4].get_rank():
+                                if self.cards[0].get_rank() == self.cards[1].get_rank():
+                                    return True
+        return False
 
     def is_flush(self):
         for i in range(4):
@@ -156,7 +166,7 @@ class Hand(object):
 hands = {"High card": 0, "Pair": 0, "Two pairs": 0, "Three of a kind": 0, "Straight": 0,
          "Flush": 0, "Fullhouse": 0, "Four of a kind": 0, "Straight flush": 0}
 
-for i in range(10000):
+for i in range(100000):
     new_deck = Deck()
     new_deck.shuffle()
     hand = Hand(new_deck)
@@ -182,7 +192,7 @@ for i in range(10000):
 
 print(hands)
 for i in hands:
-    print(hands[i]/100, "%")
+    print(hands[i] / 1000, "%")
 command = input("Would you like to compute the royal flush? (Might take a while)(y/n):")
 if command == "y":
     royalflush = 0
@@ -192,10 +202,11 @@ if command == "y":
         hand = Hand(new_deck)
         if hand.is_royalflush():
             print(hand, "It took", royalflush, "draws in order to get one royal flush,")
-            print("which means there is about:", (1/royalflush)*100,
+            print("which means there is about:", (1 / royalflush) * 100,
                   "% chances you get one in a real game")
             break
         royalflush += 1
 else:
     print("Done")
     exit(0)
+
