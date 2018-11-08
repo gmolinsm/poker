@@ -59,7 +59,8 @@ class Hand(object):
         for i in range(5):
             for j in range(i+1, 5):
                 if self.cards[i].get_rank() == self.cards[j].get_rank():
-                    return True
+                    if not self.is_twopair() and not self.is_threeofakind():
+                        return True
         return False
 
     def is_twopair(self):
@@ -69,7 +70,7 @@ class Hand(object):
                 if not ranks.__contains__(self.cards[i].get_rank()):
                     ranks.append(self.cards[i].get_rank())
         if len(ranks) == 2:
-            if not self.is_fullhouse():
+            if not self.is_fullhouse() and not self.is_flush():
                 return True
         return False
 
@@ -79,7 +80,8 @@ class Hand(object):
                 for k in range(j+1, 5):
                     if self.cards[i].get_rank() == self.cards[j].get_rank() \
                             and self.cards[i].get_rank() == self.cards[k].get_rank():
-                        return True
+                        if not self.is_flush() and not self.is_fullhouse():
+                            return True
         return False
 
     def is_straight(self):
@@ -87,7 +89,8 @@ class Hand(object):
         for i in range(4):
             if ranks.index(self.cards[i].get_rank())+1 != ranks.index(self.cards[i+1].get_rank()):
                 return False
-        return True
+        if not self.is_flush():
+            return True
 
     def is_fullhouse(self):
         count = 0
@@ -96,13 +99,15 @@ class Hand(object):
                 count += 1
                 if count > 1:
                     return False
-        return True
+        if not self.is_fourofakind():
+            return True
 
     def is_flush(self):
         for i in range(4):
             if self.cards[i].get_suit() != self.cards[i+1].get_suit():
                 return False
-        return True
+        if not self.is_fullhouse() and not self.is_straightflush() and not self.is_royalflush():
+            return True
 
     def is_fourofakind(self):
         for i in range(5):
@@ -122,55 +127,75 @@ class Hand(object):
                 return False
             if self.cards[i].get_suit() != self.cards[i+1].get_suit():
                 return False
-        return True
+        if not self.is_royalflush():
+            return True
+        return False
 
     def is_royalflush(self):
         self.cards.sort()
-        if self.cards[0].get_rank() != 10:
+        if self.cards[0].get_rank() != "10":
             return False
         for i in range(4):
             if ranks.index(self.cards[i].get_rank()) + 1 != ranks.index(self.cards[i + 1].get_rank()):
                 return False
-            if self.cards[i].get_suit() == self.cards[i+1].get_suit():
+            if self.cards[i].get_suit() != self.cards[i+1].get_suit():
                 return False
         return True
 
     def is_highcard(self):
         if self.is_pair():
             return False
-        if self.is_twopair():
-            return False
-        if self.is_threeofakind():
-            return False
-        if self.is_flush():
-            return False
-        if self.is_fullhouse():
-            return False
         if self.is_straight():
-            return False
-        if self.is_straightflush():
-            return False
-        if self.is_fourofakind():
-            return False
-        if self.is_royalflush():
             return False
         return True
 
+    def royalhand(self):
+        self.cards = [Card("♠", "10"), Card("♠", "J"), Card("♠", "Q"), Card("♠", "K"), Card("♠", "A")]
 
-highcard = 0
-pair = 0
-twopair = 0
-threeofakind = 0
-flush = 0
-fullhouse = 0
-straight = 0
-straightflush = 0
-fourofakind = 0
-royalflush = 0
+
+hands = {"High card": 0, "Pair": 0, "Two pairs": 0, "Three of a kind": 0, "Straight": 0,
+         "Flush": 0, "Fullhouse": 0, "Four of a kind": 0, "Straight flush": 0}
 
 for i in range(10000):
     new_deck = Deck()
     new_deck.shuffle()
     hand = Hand(new_deck)
+
+    if hand.is_highcard():
+        hands["High card"] += 1
+    if hand.is_pair():
+        hands["Pair"] += 1
+    if hand.is_twopair():
+        hands["Two pairs"] += 1
     if hand.is_threeofakind():
-        print(hand)
+        hands["Three of a kind"] += 1
+    if hand.is_straight():
+        hands["Straight"] += 1
+    if hand.is_flush():
+        hands["Flush"] += 1
+    if hand.is_fullhouse():
+        hands["Fullhouse"] += 1
+    if hand.is_fourofakind():
+        hands["Four of a kind"] += 1
+    if hand.is_straightflush():
+        hands["Straight flush"] += 1
+
+print(hands)
+for i in hands:
+    print(hands[i]/100, "%")
+command = input("Would you like to compute the royal flush? (Might take a while)(y/n):")
+if command == "y":
+    royalflush = 0
+    while True:
+        new_deck = Deck()
+        new_deck.shuffle()
+        hand = Hand(new_deck)
+        if hand.is_royalflush():
+            print(hand, "It took", royalflush, "draws in order to get one royal flush,")
+            print("which means there is about:", (1/royalflush)*100,
+                  "% chances you get one in a real game")
+            break
+        royalflush += 1
+else:
+    print("Done")
+    exit(0)
